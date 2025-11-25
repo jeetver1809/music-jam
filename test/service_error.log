@@ -1,0 +1,22 @@
+ERROR_FULL: 
+Error code: Error: Command failed: C:\Users\jeetv\Downloads\music\yt-dlp.exe https://www.youtube.com/watch?v=97NWNz9kgxU -f bestaudio -g --extractor-args youtube:player_client=android --user-agent Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36 --referer https://www.youtube.com/ --no-warnings --cookies C:\Users\jeetv\Downloads\music\cookies.txt
+ERROR: [youtube] 97NWNz9kgxU: Requested format is not available. Use --list-formats for a list of available formats
+
+
+Stderr:
+ERROR: [youtube] 97NWNz9kgxU: Requested format is not available. Use --list-formats for a list of available formats
+
+STACK: Error: 
+Error code: Error: Command failed: C:\Users\jeetv\Downloads\music\yt-dlp.exe https://www.youtube.com/watch?v=97NWNz9kgxU -f bestaudio -g --extractor-args youtube:player_client=android --user-agent Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36 --referer https://www.youtube.com/ --no-warnings --cookies C:\Users\jeetv\Downloads\music\cookies.txt
+ERROR: [youtube] 97NWNz9kgxU: Requested format is not available. Use --list-formats for a list of available formats
+
+
+Stderr:
+ERROR: [youtube] 97NWNz9kgxU: Requested format is not available. Use --list-formats for a list of available formats
+
+    at YTDlpWrap.createError (C:\Users\jeetv\Downloads\music\node_modules\yt-dlp-wrap\dist\index.js:347:16)
+    at C:\Users\jeetv\Downloads\music\node_modules\yt-dlp-wrap\dist\index.js:188:38
+    at ChildProcess.exithandler (node:child_process:424:5)
+    at ChildProcess.emit (node:events:519:28)
+    at maybeClose (node:internal/child_process:1101:16)
+    at ChildProcess._handle.onexit (node:internal/child_process:304:5)

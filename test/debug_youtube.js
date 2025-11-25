@@ -1,15 +1,16 @@
 import { getAudioLink } from '../src/youtubeService.js';
-import YTDlpWrap from 'yt-dlp-wrap';
 
-async function run() {
-    console.log("YTDlpWrap export:", YTDlpWrap);
+async function test() {
     try {
-        console.log("Fetching...");
-        const url = await getAudioLink('i_SsnRdgitA');
+        console.log("Fetching with cookies...");
+        const url = await getAudioLink('97NWNz9kgxU'); // The video ID from user logs
         console.log(url ? "SUCCESS" : "FAILED (No URL)");
+        if (url) console.log("URL:", url.substring(0, 50) + "...");
     } catch (err) {
-        console.log("ERROR_MSG: " + err.message);
+        const fs = await import('fs');
+        fs.writeFileSync('test/debug_error.log', "ERROR_MSG: " + err.message);
+        console.log("Error logged to test/debug_error.log");
     }
 }
 
-run();
+test();

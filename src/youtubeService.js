@@ -76,20 +76,35 @@ class YouTubeService {
             const ytDlpWrap = new YTDlpWrap.default(this.ytDlpPath);
             const url = `https://www.youtube.com/watch?v=${videoId}`;
 
-            // Get direct URL with anti-bot bypass args
-            const output = await ytDlpWrap.execPromise([
+            const args = [
                 url,
-                '-f', 'bestaudio',
+                '-f', 'bestaudio/best',
                 '-g',
-                '--extractor-args', 'youtube:player_client=android',
-                '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                '--referer', 'https://www.youtube.com/',
                 '--no-warnings'
-            ]);
+            ];
+
+            const cookiesPath = path.join(process.cwd(), 'cookies.txt');
+            if (fs.existsSync(cookiesPath)) {
+                console.log('🍪 Using cookies.txt for authentication');
+                args.push('--cookies', cookiesPath);
+            } else {
+                // Fallback to anti-bot args if no cookies
+                args.push(
+                    '--extractor-args', 'youtube:player_client=android',
+                    '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                    '--referer', 'https://www.youtube.com/'
+                );
+            }
+
+            // Get direct URL
+            const output = await ytDlpWrap.execPromise(args);
 
             return output.trim();
         } catch (err) {
             console.error("❌ Link Fetch Error:", err.message);
+            try {
+                fs.writeFileSync('test/service_error.log', "ERROR_FULL: " + err.message + "\nSTACK: " + err.stack);
+            } catch (e) { /* ignore */ }
             return null;
         }
     }
