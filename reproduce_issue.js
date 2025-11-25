@@ -1,6 +1,6 @@
 import { getAudioLink } from './src/youtubeService.js';
 
-const videoId = 'X8WEMtDqyZg'; // The failing ID
+const videoId = 'ekr2nIex040'; // The failing ID
 
 console.log(`Testing extraction for ${videoId}...`);
 
