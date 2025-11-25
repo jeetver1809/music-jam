@@ -1,4 +1,4 @@
-const { Innertube, UniversalCache } = require('youtubei.js');
+import { Innertube, UniversalCache } from 'youtubei.js';
 
 class YouTubeService {
     constructor() {
@@ -89,7 +89,7 @@ class YouTubeService {
 async function getAudioLink(videoId) {
     try {
         console.log(`🎧 Fetching audio link for: ${videoId}`);
-        const info = await module.exports.youtubeService.youtube.getBasicInfo(videoId);
+        const info = await youtubeService.youtube.getBasicInfo(videoId);
 
         // Find best audio format
         const format = info.streaming_data.formats
@@ -110,7 +110,5 @@ async function getAudioLink(videoId) {
     }
 }
 
-module.exports = {
-    youtubeService: new YouTubeService(),
-    getAudioLink
-};
+export const youtubeService = new YouTubeService();
+export { getAudioLink };

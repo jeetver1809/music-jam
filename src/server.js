@@ -1,11 +1,11 @@
-const express = require('express');
-const http = require('http');
-const { Server } = require('socket.io');
-const cors = require('cors');
-const socketHandler = require('./socket');
-const roomManager = require('./roomManager');
-const { getAudioLink } = require('./youtubeService');
-const { Readable } = require('stream');
+import express from 'express';
+import http from 'http';
+import { Server } from 'socket.io';
+import cors from 'cors';
+import socketHandler from './socket.js';
+import roomManager from './roomManager.js';
+import { getAudioLink } from './youtubeService.js';
+import { Readable } from 'stream';
 
 // Global error handlers to prevent crashes from third-party libraries
 process.on('uncaughtException', (err) => {

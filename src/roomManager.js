@@ -1,4 +1,4 @@
-const { v4: uuidv4 } = require('uuid');
+import { v4 as uuidv4 } from 'uuid';
 
 class RoomManager {
     constructor() {
@@ -207,4 +207,5 @@ class RoomManager {
     }
 }
 
-module.exports = new RoomManager();
+const roomManager = new RoomManager();
+export default roomManager;

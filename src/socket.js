@@ -1,7 +1,7 @@
-const roomManager = require('./roomManager');
-const { youtubeService } = require('./youtubeService');
+import roomManager from './roomManager.js';
+import { youtubeService } from './youtubeService.js';
 
-module.exports = (io) => {
+export default (io) => {
     io.on('connection', (socket) => {
         console.log(`⚡ User Connected: ${socket.id}`);
 
