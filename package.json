@@ -26,7 +26,8 @@
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1",
     "uuid": "^9.0.1",
-    "youtubei.js": "^16.0.1"
+    "youtubei.js": "^16.0.1",
+    "yt-dlp-wrap": "^2.3.12"
   },
   "devDependencies": {
     "jest": "^30.2.0",
