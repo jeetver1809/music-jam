@@ -53,13 +53,20 @@ app.get('/api/rooms/:code', (req, res) => {
 
 app.get('/stream/:videoId', async (req, res) => {
     const { videoId } = req.params;
+
+    // Ensure CORS for all outcomes
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+
     try {
         console.log(`🎵 Streaming request for: ${videoId}`);
         const audioUrl = await getAudioLink(videoId);
 
         if (!audioUrl) {
             console.error(`❌ No audio URL found for ${videoId}`);
-            return res.status(404).send('Audio source not found');
+            // Return JSON to avoid ORB issues with opaque responses if possible, 
+            // though audio tags might still complain. 404 is correct semantic.
+            return res.status(404).json({ error: 'Audio source not found' });
         }
 
         console.log(`🔗 Upstream URL: ${audioUrl.substring(0, 100)}...`);
@@ -69,28 +76,57 @@ app.get('/stream/:videoId', async (req, res) => {
             headers['Range'] = req.headers.range;
         }
 
-        const response = await fetch(audioUrl, { headers });
-        console.log(`📡 Upstream Response: ${response.status} ${response.statusText}`);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s connection timeout
 
-        if (!response.ok && response.status !== 206) {
-            throw new Error(`Upstream fetch failed: ${response.status} ${response.statusText}`);
+        try {
+            const response = await fetch(audioUrl, {
+                headers,
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+
+            console.log(`📡 Upstream Response: ${response.status} ${response.statusText}`);
+
+            if (!response.ok && response.status !== 206) {
+                throw new Error(`Upstream fetch failed: ${response.status} ${response.statusText}`);
+            }
+
+            // Forward important headers
+            res.status(response.status);
+
+            const forwardHeaders = ['content-type', 'content-length', 'content-range', 'accept-ranges'];
+            forwardHeaders.forEach(header => {
+                const value = response.headers.get(header);
+                if (value) res.setHeader(header, value);
+            });
+
+            // Handle client disconnect to stop stream processing
+            req.on('close', () => {
+                console.log(`🔌 Client disconnected from stream: ${videoId}`);
+                // The pipe will automatically stop, but good to log
+            });
+
+            // Pipe the stream
+            // Use pipeline if available for better error handling, but pipe is fine here
+            const stream = Readable.fromWeb(response.body);
+            stream.pipe(res);
+
+            stream.on('error', (err) => {
+                console.error('❌ Stream Pipe Error:', err.message);
+                if (!res.headersSent) res.end();
+            });
+
+        } catch (fetchErr) {
+            clearTimeout(timeoutId);
+            throw fetchErr;
         }
-
-        // Forward important headers
-        res.status(response.status);
-
-        const forwardHeaders = ['content-type', 'content-length', 'content-range', 'accept-ranges'];
-        forwardHeaders.forEach(header => {
-            const value = response.headers.get(header);
-            if (value) res.setHeader(header, value);
-        });
-
-        // Pipe the stream
-        Readable.fromWeb(response.body).pipe(res);
 
     } catch (err) {
         console.error('❌ Stream Error:', err.message);
-        if (!res.headersSent) res.status(500).send('Streaming failed');
+        if (!res.headersSent) {
+            res.status(500).json({ error: 'Streaming failed' });
+        }
     }
 });
 

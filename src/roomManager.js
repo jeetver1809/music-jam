@@ -25,7 +25,8 @@ class RoomManager {
             isPlaying: false,
             createdAt: Date.now(),
             lastActivity: Date.now(),
-            emptySince: null
+            emptySince: null,
+            consecutiveFailures: 0
         };
 
         this.rooms.set(roomCode, room);
@@ -136,6 +137,11 @@ class RoomManager {
         room.lastActivity = Date.now();
 
         this.log(roomCode, 'PLAY_NEXT', { title: nextSong.title, queueId: nextSong.queueId });
+
+        // We don't reset failures here immediately, we reset when playback actually starts or progresses.
+        // But for simplicity, let's assume if we successfully dequeued, we give it a chance.
+        // Actually, better to reset it in updatePlaybackState if it's playing.
+
         return room.currentSong;
     }
 
@@ -146,6 +152,10 @@ class RoomManager {
         if (state.isPlaying !== undefined) {
             room.isPlaying = state.isPlaying;
             this.log(roomCode, state.isPlaying ? 'RESUME' : 'PAUSE');
+
+            if (state.isPlaying) {
+                room.consecutiveFailures = 0; // Reset on successful playback
+            }
         }
 
         if (room.currentSong) {

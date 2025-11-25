@@ -1,4 +1,4 @@
-const roomManager = require('./roomManager');
+import roomManager from './roomManager.js';
 
 describe('RoomManager', () => {
     const roomCode = 'TEST_ROOM';

@@ -124,11 +124,18 @@ class YouTubeService {
                         return output.trim();
                     }
                 } catch (err) {
-                    console.warn(`⚠️ Extraction failed with ${client}:`, err.message.split('\n')[0]);
+                    const errorMsg = err.message.split('\n')[0];
+                    console.warn(`⚠️ Extraction failed with ${client}:`, errorMsg);
+
+                    // Fail fast on specific errors
+                    if (errorMsg.includes('Video unavailable') || errorMsg.includes('Private video')) {
+                        console.error(`❌ Fatal Error: Video ${videoId} is unavailable or private.`);
+                        return null; // Don't retry other clients
+                    }
                 }
             }
 
-            console.error("❌ All extraction attempts failed.");
+            console.error(`❌ All extraction attempts failed for ${videoId}.`);
             return null;
         } catch (err) {
             console.error("❌ Link Fetch Error (Fatal):", err);

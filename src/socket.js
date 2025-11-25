@@ -131,15 +131,29 @@ export default (io) => {
 
             // Prevent spam: Only skip if the error is for the current song
             if (room.currentSong.id === songId) {
-                console.log(`⚠️ Song load error in ${roomCode}, skipping...`);
-                const nextSong = roomManager.playNext(roomCode);
-                if (nextSong) {
-                    io.to(roomCode).emit('play_song', nextSong);
-                    io.to(roomCode).emit('queue_updated', room.queue);
-                } else {
+                room.consecutiveFailures = (room.consecutiveFailures || 0) + 1;
+                console.log(`⚠️ Song load error in ${roomCode} (${room.consecutiveFailures} consecutive failures), skipping...`);
+
+                if (room.consecutiveFailures >= 5) {
+                    console.error(`❌ Too many consecutive failures in ${roomCode}. Stopping playback.`);
                     io.to(roomCode).emit('stop_player');
+                    io.to(roomCode).emit('song_error', 'Playback stopped due to multiple errors.');
                     roomManager.updatePlaybackState(roomCode, { isPlaying: false });
+                    room.consecutiveFailures = 0; // Reset
+                    return;
                 }
+
+                // Add a small delay before skipping to prevent rapid loops
+                setTimeout(() => {
+                    const nextSong = roomManager.playNext(roomCode);
+                    if (nextSong) {
+                        io.to(roomCode).emit('play_song', nextSong);
+                        io.to(roomCode).emit('queue_updated', room.queue);
+                    } else {
+                        io.to(roomCode).emit('stop_player');
+                        roomManager.updatePlaybackState(roomCode, { isPlaying: false });
+                    }
+                }, 1000);
             }
         });
 
