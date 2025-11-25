@@ -86,30 +86,24 @@ class YouTubeService {
 // Search -> youtubei.js (Fast)
 // Stream -> youtube-dl-exec (Reliable for direct links)
 
-const youtubedl = require('youtube-dl-exec');
-
 async function getAudioLink(videoId) {
-    const TIMEOUT_MS = 30000; // 30 seconds
-
-    const timeout = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('YouTube fetch timeout')), TIMEOUT_MS)
-    );
-
-    const fetchLink = async () => {
-        const youtubeUrl = `https://www.youtube.com/watch?v=${videoId}`;
-        console.log(`🎧 Fetching audio link for: ${videoId}`);
-        const output = await youtubedl(youtubeUrl, {
-            getUrl: true,
-            format: 'bestaudio[ext=m4a]',
-            noCheckCertificates: true,
-            noWarnings: true,
-            preferFreeFormats: true,
-        });
-        return output.trim();
-    };
-
     try {
-        return await Promise.race([fetchLink(), timeout]);
+        console.log(`🎧 Fetching audio link for: ${videoId}`);
+        const info = await module.exports.youtubeService.youtube.getBasicInfo(videoId);
+
+        // Find best audio format
+        const format = info.streaming_data.formats
+            .concat(info.streaming_data.adaptive_formats)
+            .find(f => f.has_audio && !f.has_video);
+
+        if (format) {
+            return format.url;
+        }
+
+        // Fallback: Try to decipher if needed (Innertube usually handles this)
+        // If no direct url found in basic info, we might need full getInfo
+        // But for now, let's try this.
+        return null;
     } catch (err) {
         console.error("❌ Link Fetch Error:", err.message);
         return null;
