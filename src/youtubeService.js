@@ -65,7 +65,60 @@ class YouTubeService {
         } catch (err) {
             console.error('❌ Search Error:', err.message);
             return [];
+        }
+    }
 
-            export async function getAudioLink(videoId) {
-                return await youtubeService.getAudioUrl(videoId);
+    async getAudioUrl(videoId) {
+        try {
+            await this.ensureBinary();
+
+            // Force executable permissions on Linux/Mac every time, just in case
+            if (process.platform !== 'win32') {
+                try {
+                    fs.chmodSync(this.ytDlpPath, '755');
+                } catch (e) { /* ignore */ }
             }
+
+            console.log(`🎧 Fetching audio link for: ${videoId}`);
+
+            const ytDlpWrap = new YTDlpWrap.default(this.ytDlpPath);
+            const url = `https://www.youtube.com/watch?v=${videoId}`;
+
+            const args = [
+                url,
+                '-f', 'bestaudio/best',
+                '-g',
+                '--no-warnings'
+            ];
+
+            const cookiesPath = path.join(process.cwd(), 'cookies.txt');
+            if (fs.existsSync(cookiesPath)) {
+                console.log('🍪 Using cookies.txt for authentication');
+                args.push('--cookies', cookiesPath);
+            } else {
+                // Fallback to anti-bot args if no cookies
+                args.push(
+                    '--extractor-args', 'youtube:player_client=android',
+                    '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                    '--referer', 'https://www.youtube.com/'
+                );
+            }
+
+            // Get direct URL
+            const output = await ytDlpWrap.execPromise(args);
+
+            return output.trim();
+        } catch (err) {
+            console.error("❌ Link Fetch Error (Full):", err);
+            if (err.stderr) console.error("❌ Stderr:", err.stderr);
+            if (err.stdout) console.error("❌ Stdout:", err.stdout);
+            return null;
+        }
+    }
+}
+
+export const youtubeService = new YouTubeService();
+
+export async function getAudioLink(videoId) {
+    return await youtubeService.getAudioUrl(videoId);
+}
