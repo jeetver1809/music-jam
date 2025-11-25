@@ -64,17 +64,26 @@ app.get('/stream/:videoId', async (req, res) => {
 
         console.log(`🔗 Upstream URL: ${audioUrl.substring(0, 100)}...`);
 
-        const response = await fetch(audioUrl);
+        const headers = {};
+        if (req.headers.range) {
+            headers['Range'] = req.headers.range;
+        }
+
+        const response = await fetch(audioUrl, { headers });
         console.log(`📡 Upstream Response: ${response.status} ${response.statusText}`);
 
-        if (!response.ok) {
+        if (!response.ok && response.status !== 206) {
             throw new Error(`Upstream fetch failed: ${response.status} ${response.statusText}`);
         }
 
-        // Forward content type
-        const contentType = response.headers.get('content-type');
-        console.log(`📦 Content-Type: ${contentType}`);
-        if (contentType) res.setHeader('Content-Type', contentType);
+        // Forward important headers
+        res.status(response.status);
+
+        const forwardHeaders = ['content-type', 'content-length', 'content-range', 'accept-ranges'];
+        forwardHeaders.forEach(header => {
+            const value = response.headers.get(header);
+            if (value) res.setHeader(header, value);
+        });
 
         // Pipe the stream
         Readable.fromWeb(response.body).pipe(res);

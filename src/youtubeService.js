@@ -92,16 +92,18 @@ class YouTubeService {
             ];
 
             const cookiesPath = path.join(process.cwd(), 'cookies.txt');
+            // Always use robust anti-bot args
+            args.push(
+                '--extractor-args', 'youtube:player_client=android',
+                '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                '--referer', 'https://www.youtube.com/',
+                '--no-playlist',
+                '--force-ipv4'
+            );
+
             if (fs.existsSync(cookiesPath)) {
                 console.log('🍪 Using cookies.txt for authentication');
                 args.push('--cookies', cookiesPath);
-            } else {
-                // Fallback to anti-bot args if no cookies
-                args.push(
-                    '--extractor-args', 'youtube:player_client=android',
-                    '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                    '--referer', 'https://www.youtube.com/'
-                );
             }
 
             // Get direct URL
