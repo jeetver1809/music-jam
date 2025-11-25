@@ -58,16 +58,22 @@ app.get('/stream/:videoId', async (req, res) => {
         const audioUrl = await getAudioLink(videoId);
 
         if (!audioUrl) {
+            console.error(`❌ No audio URL found for ${videoId}`);
             return res.status(404).send('Audio source not found');
         }
 
+        console.log(`🔗 Upstream URL: ${audioUrl.substring(0, 100)}...`);
+
         const response = await fetch(audioUrl);
+        console.log(`📡 Upstream Response: ${response.status} ${response.statusText}`);
+
         if (!response.ok) {
             throw new Error(`Upstream fetch failed: ${response.status} ${response.statusText}`);
         }
 
         // Forward content type
         const contentType = response.headers.get('content-type');
+        console.log(`📦 Content-Type: ${contentType}`);
         if (contentType) res.setHeader('Content-Type', contentType);
 
         // Pipe the stream
