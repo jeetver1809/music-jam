@@ -28,15 +28,30 @@ class YouTubeService {
             try {
                 await YTDlpWrap.default.downloadFromGithub(this.ytDlpPath);
                 console.log('✅ yt-dlp binary downloaded');
-
-                // Ensure executable permissions on Linux/Mac
-                if (process.platform !== 'win32') {
-                    fs.chmodSync(this.ytDlpPath, '755');
-                }
             } catch (err) {
                 console.error('❌ Failed to download yt-dlp binary:', err);
-                throw err;
+                throw new Error('yt-dlp download failed. Binary must be included in repository.');
             }
+        }
+
+        // CRITICAL: Ensure executable permissions on Linux/Mac EVERY TIME
+        if (process.platform !== 'win32') {
+            try {
+                fs.chmodSync(this.ytDlpPath, 0o755); // Use octal notation
+                console.log('✅ Set executable permissions on yt-dlp');
+            } catch (e) {
+                console.error('❌ Failed to set permissions:', e.message);
+            }
+        }
+
+        // Verify binary works
+        try {
+            const ytDlpWrap = new YTDlpWrap.default(this.ytDlpPath);
+            const version = await ytDlpWrap.execPromise(['--version']);
+            console.log(`✅ yt-dlp verified. Version: ${version.trim()}`);
+        } catch (e) {
+            console.error(`❌ yt-dlp verification failed:`, e.message);
+            throw new Error(`yt-dlp binary not executable. Platform: ${process.platform}`);
         }
     }
 
@@ -124,14 +139,30 @@ class YouTubeService {
                         return output.trim();
                     }
                 } catch (err) {
-                    const errorMsg = err.message.split('\n')[0];
-                    console.warn(`⚠️ Extraction failed with ${client}:`, errorMsg);
-
-                    // Fail fast on specific errors
-                    if (errorMsg.includes('Video unavailable') || errorMsg.includes('Private video')) {
-                        console.error(`❌ Fatal Error: Video ${videoId} is unavailable or private.`);
-                        return null; // Don't retry other clients
+                    // Extract actual error from stderr if available
+                    let errorMsg = err.message || 'Unknown error';
+                    if (err.stderr) {
+                        // yt-dlp errors are in stderr, extract the ERROR: line
+                        const stderrLines = err.stderr.split('\n');
+                        const errorLine = stderrLines.find(line => line.includes('ERROR:'));
+                        if (errorLine) {
+                            errorMsg = errorLine;
+                        }
                     }
+
+                    console.warn(`⚠️ Extraction failed with ${client}: ${errorMsg}`);
+
+                    // Fail fast on specific errors (don't retry other clients)
+                    if (errorMsg.includes('Video unavailable') ||
+                        errorMsg.includes('Private video') ||
+                        errorMsg.includes('This video is not available') ||
+                        errorMsg.includes('has been removed') ||
+                        errorMsg.includes('age-restricted')) {
+                        console.error(`❌ Fatal Error: Video ${videoId} cannot be played: ${errorMsg}`);
+                        return null;
+                    }
+
+                    // Continue trying other clients for other errors
                 }
             }
 

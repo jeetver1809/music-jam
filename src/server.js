@@ -51,12 +51,22 @@ app.get('/api/rooms/:code', (req, res) => {
     }
 });
 
+// Handle CORS preflight
+app.options('/stream/:videoId', (req, res) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Range, Content-Type');
+    res.setHeader('Access-Control-Max-Age', '86400');
+    res.status(204).end();
+});
+
 app.get('/stream/:videoId', async (req, res) => {
     const { videoId } = req.params;
 
     // Ensure CORS for all outcomes
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    res.setHeader('Access-Control-Expose-Headers', 'Content-Length, Content-Range, Content-Type');
 
     try {
         console.log(`🎵 Streaming request for: ${videoId}`);
